@@ -19,4 +19,4 @@
 Python, Amazon S3, DuckDB, Google BigQuery, Apache Airflow, Pandas, PyArrow
 
 ## Author
-Ahmad Zulham Hamdan | https://linkedin.com/in/ahmad-zulham-hamdan-665170279
+Ahmad Zulham Hamdan | https://linkedin.com/in/ahmad-zulham-665170279
