@@ -1,22 +1,78 @@
-# IMF World Economic Outlook ELT Pipeline | DuckDB, BigQuery
+# IMF Economic Data ELT — DuckDB + BigQuery
 
-**Stack:** IMF API -> S3 raw zone -> DuckDB -> BigQuery -> Airflow
+![DuckDB](https://img.shields.io/badge/DuckDB-FFF000?style=flat&logo=duckdb&logoColor=black)
+![Google BigQuery](https://img.shields.io/badge/BigQuery-4285F4?style=flat&logo=googlebigquery&logoColor=white)
+![dbt](https://img.shields.io/badge/dbt-FF694B?style=flat&logo=dbt&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 
-## Key Metrics
-- 50,000 records/run (8 indicators x 190+ countries x 25 years)
-- DuckDB reads S3 Parquet directly via httpfs, no data movement needed
-- Raw data always preserved in S3, full reprocessing anytime
-- Idempotent: DELETE + INSERT by batch_date
+Lightweight ELT pipeline for IMF World Economic Outlook data using DuckDB for local in-process transformations before loading to Google BigQuery. Demonstrates a modern, low-infrastructure approach to economic data processing — no Spark cluster needed.
 
-## ELT vs ETL
-| | ETL | ELT (this project) |
-|---|---|---|
-| Transform where | Before loading via Spark | After loading via DuckDB SQL |
-| Infrastructure | Spark cluster needed | DuckDB runs on any laptop |
-| Raw data retained | No | Yes, S3 Parquet |
+## Architecture
+
+```mermaid
+graph TD
+    A[IMF Data API<br/>WEO / IFS Indicators] --> B[Python Extractor<br/>SDMX / CSV Endpoints]
+    B --> C[DuckDB<br/>Local In-Process DB]
+    C --> D[dbt + DuckDB<br/>Local Transformations]
+    D --> E[Parquet Export<br/>GCS Bucket]
+    E --> F[BigQuery<br/>External + Native Tables]
+    F --> G[Analytics Queries<br/>GDP / Inflation / Trade]
+```
+
+## Features
+
+- IMF Data API client supporting WEO, IFS, and BOP datasets
+- DuckDB for blazing-fast local transformations without cluster overhead
+- dbt + dbt-duckdb adapter for SQL transformation testing
+- Seamless export from DuckDB → Parquet → BigQuery via GCS
+- Covers 190+ countries, 50+ macroeconomic indicators
+- Incremental loads: only new periods fetched on each run
 
 ## Tech Stack
-Python, Amazon S3, DuckDB, Google BigQuery, Apache Airflow, Pandas, PyArrow
+
+| Layer | Technology |
+|-------|-----------|
+| Source | IMF Data API (SDMX 2.1) |
+| Local Processing | DuckDB 0.10 |
+| Transformation | dbt-duckdb |
+| Cloud Store | Google Cloud Storage |
+| Warehouse | Google BigQuery |
+| Infrastructure | Docker (minimal) |
+
+## Prerequisites
+
+- Python 3.10+
+- Google Cloud credentials (GCS + BigQuery)
+- No cluster required — runs on a laptop
+
+## Quick Start
+
+```bash
+git clone https://github.com/zulham-tech/imf-elt-duckdb-bigquery.git
+cd imf-elt-duckdb-bigquery
+pip install -r requirements.txt
+cp .env.example .env  # add GCP credentials path
+python pipeline/run.py --dataset WEO --year 2024
+dbt run --profiles-dir .
+```
+
+## Project Structure
+
+```
+.
+├── pipeline/
+│   ├── extract/         # IMF API clients
+│   ├── transform/       # DuckDB SQL transformations
+│   └── load/            # GCS + BigQuery loader
+├── dbt/
+│   ├── models/          # dbt models for DuckDB
+│   └── tests/           # Data quality tests
+├── notebooks/           # EDA + visualization
+├── .env.example
+└── requirements.txt
+```
 
 ## Author
-Ahmad Zulham Hamdan | https://linkedin.com/in/ahmad-zulham-665170279
+
+**Ahmad Zulham Hamdan** — [LinkedIn](https://linkedin.com/in/ahmad-zulham-665170279) | [GitHub](https://github.com/zulham-tech)
